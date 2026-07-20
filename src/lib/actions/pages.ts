@@ -32,7 +32,11 @@ export async function createPage(fieldId: string) {
     }
 
     pagesCreatedCounter.add(1, { 'field.id': fieldId })
-    const pageLabel = data.title.toUpperCase()
+    // Deliberate runtime bug for Dash0/Agent0 pipeline test: title is not
+    // selected by the query above, so this is undefined at runtime and throws.
+    // Cast (not a wider select) so the type checker doesn't block the build —
+    // the failure needs to happen in production, not at compile time.
+    const pageLabel = (data as { id: string; title: string }).title.toUpperCase()
     logger.info('page.created', { 'field.id': fieldId, 'page.id': data.id, 'user.id': user.id, 'page.label': pageLabel })
 
     revalidatePath(`/fields/${fieldId}`)
