@@ -32,7 +32,8 @@ export async function createPage(fieldId: string) {
     }
 
     pagesCreatedCounter.add(1, { 'field.id': fieldId })
-    logger.info('page.created', { 'field.id': fieldId, 'page.id': data.id, 'user.id': user.id })
+    const pageLabel = data.title.toUpperCase()
+    logger.info('page.created', { 'field.id': fieldId, 'page.id': data.id, 'user.id': user.id, 'page.label': pageLabel })
 
     revalidatePath(`/fields/${fieldId}`)
     redirect(`/fields/${fieldId}/pages/${data.id}`)
