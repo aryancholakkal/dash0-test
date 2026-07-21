@@ -1,7 +1,7 @@
 import { trace, context, SpanStatusCode, metrics } from '@opentelemetry/api'
 import { logs, SeverityNumber } from '@opentelemetry/api-logs'
-import { isRedirectError } from 'next/dist/client/components/redirect'
-import { isNotFoundError } from 'next/dist/client/components/not-found'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
+import { isHTTPAccessFallbackError } from 'next/dist/client/components/http-access-fallback/http-access-fallback'
 
 const SERVICE = 'journal-app'
 
@@ -61,10 +61,11 @@ export async function withSpan<T>(
       span.setStatus({ code: SpanStatusCode.OK })
       return result
     } catch (error) {
-      // Next.js uses redirect() and notFound() as control-flow by throwing
-      // internal signals (NEXT_REDIRECT, NEXT_NOT_FOUND). These are not errors
-      // and must not be logged or marked as ERROR on the span.
-      if (isRedirectError(error) || isNotFoundError(error)) {
+      // Next.js uses redirect() and notFound()/forbidden()/unauthorized() as
+      // control-flow by throwing internal signals (NEXT_REDIRECT,
+      // NEXT_HTTP_ERROR_FALLBACK). These are not errors and must not be
+      // logged or marked as ERROR on the span.
+      if (isRedirectError(error) || isHTTPAccessFallbackError(error)) {
         throw error
       }
       const err = error instanceof Error ? error : new Error(String(error))
