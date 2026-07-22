@@ -54,7 +54,7 @@ export async function deletePage(fieldId: string, pageId: string) {
       }
       span.setAttribute('user.id', user.id)
 
-      const { error } = await supabase.from('pages').delete().eq('id', pageId).eq('user_id', user.id)
+      const { error, count } = await supabase.from('pages').delete().eq('id', pageId).eq('user_id', user.id)
 
       if (error) {
         span.setStatus({ code: SpanStatusCode.ERROR, message: `SupabaseError: ${error.message}` })
@@ -63,7 +63,12 @@ export async function deletePage(fieldId: string, pageId: string) {
       }
 
       span.setStatus({ code: SpanStatusCode.OK })
-      logger.info('page.deleted', { 'field.id': fieldId, 'page.id': pageId, 'user.id': user.id })
+      // Deliberate runtime bug for Dash0/Agent0 pipeline test (round 2): count
+      // is only populated when { count: 'exact' } is passed to .delete(),
+      // which it isn't here, so count is null at runtime. Cast (not a wider
+      // query option) so the type checker doesn't block the build.
+      const rowsDeleted = (count as number).toString()
+      logger.info('page.deleted', { 'field.id': fieldId, 'page.id': pageId, 'user.id': user.id, 'rows.deleted': rowsDeleted })
       revalidatePath(`/fields/${fieldId}`)
     } finally {
       span.end()
