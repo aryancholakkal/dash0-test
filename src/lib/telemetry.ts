@@ -1,5 +1,6 @@
 import { trace, context, SpanStatusCode, metrics } from '@opentelemetry/api'
 import { logs, SeverityNumber } from '@opentelemetry/api-logs'
+import { isRedirectError } from 'next/dist/client/components/redirect-error'
 
 const SERVICE = 'journal-app'
 
@@ -59,6 +60,12 @@ export async function withSpan<T>(
       span.setStatus({ code: SpanStatusCode.OK })
       return result
     } catch (error) {
+      // Next.js redirect() throws a NEXT_REDIRECT error as control flow —
+      // it is not a real failure. Pass it through without marking the span
+      // as errored or emitting an error log.
+      if (isRedirectError(error)) {
+        throw error
+      }
       const err = error instanceof Error ? error : new Error(String(error))
       span.setStatus({ code: SpanStatusCode.ERROR, message: `${err.name}: ${err.message}` })
       logger.error(`${name}.failed`, {
