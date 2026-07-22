@@ -105,7 +105,7 @@ export async function updatePage(
 
       const { error } = await supabase
         .from('pages')
-        .update({ title, content, description: content })
+        .update({ title, content })
         .eq('id', pageId)
         .eq('user_id', user.id)
 
