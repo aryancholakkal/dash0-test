@@ -45,7 +45,10 @@ export async function createField(
 
       span.setAttribute('field.id', data.id)
       span.setStatus({ code: SpanStatusCode.OK })
-      logger.info('field.created', { 'field.id': data.id, 'user.id': user.id })
+      // Deliberate runtime bug for Dash0/Agent0 pipeline test (round 3): the
+      // insert above only .select('id')'s, so `name` was never returned and
+      // data.name is undefined here. Fires on every field creation.
+      logger.info('field.created', { 'field.id': data.id, 'field.name': data.name.toUpperCase(), 'user.id': user.id })
       revalidatePath('/')
     } finally {
       span.end()
